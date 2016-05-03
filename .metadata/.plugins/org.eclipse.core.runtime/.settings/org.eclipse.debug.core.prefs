@@ -1,0 +1,3 @@
+#Tue Aug 30 15:34:15 GMT 2011
+prefWatchExpressions=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<watchExpressions>\r\n<expression enabled\="true" text\="x"/>\r\n<expression enabled\="true" text\="y"/>\r\n<expression enabled\="true" text\="oldx"/>\r\n<expression enabled\="true" text\="oldy"/>\r\n<expression enabled\="true" text\="this"/>\r\n<expression enabled\="true" text\="good"/>\r\n<expression enabled\="true" text\="targetX"/>\r\n<expression enabled\="true" text\="targetY"/>\r\n<expression enabled\="true" text\="c"/>\r\n<expression enabled\="true" text\="i"/>\r\n<expression enabled\="true" text\="cm"/>\r\n</watchExpressions>\r\n
+eclipse.preferences.version=1

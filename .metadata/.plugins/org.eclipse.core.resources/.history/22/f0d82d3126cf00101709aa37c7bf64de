@@ -1,0 +1,28 @@
+
+public class Ji {
+	int jX = 0;
+	int jG = 0;
+	int jM = 0;
+	
+	public void work(){
+		for(jX=0;jX<=300;jX++){
+			for(jG=0;jG<=20;jG++){
+				for(jM=0;jM<=33;jM++){
+					if((jX+jG+jM==100)&&(jX+15*jG+9*jM==300)){
+						System.out.print("¹«¼¦= "+jG);
+						System.out.print(" ");
+						System.out.print(jM);
+						System.out.print(" ");
+						System.out.print(jX);
+						System.out.println();
+					}
+				}
+			}
+		}
+	}
+	public static void main(String[] args) {
+		Ji ji = new Ji();
+		ji.work();
+	}
+
+}

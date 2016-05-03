@@ -1,0 +1,197 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+public class MyGame extends Frame {
+	private static final long serialVersionUID = 1L;
+	int kill = 0;
+	int xMouse = 0;
+	int yMouse = 0;
+	private Random r = new Random();
+	PaintThread PaintThread1 = new PaintThread();
+	Thread thread1 = new Thread(PaintThread1);
+	boolean flagAE = false;
+	Image offScreenImage =null;
+	Tank t1 = new Tank(50,75,true,this);
+	List<Missile> missiles = new ArrayList<Missile>();
+	List<Tank> tanks = new ArrayList<Tank>();
+	List<Explode> explodes = new ArrayList<Explode>();
+	List<Wall> walls = new ArrayList<Wall>();
+	int flagWall[][]=
+			{{0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0},
+			 {0,0,0,0,1,0,1,0,1,1,1,1,1,0,0,0},
+			 {1,0,0,0,1,0,1,0,0,0,0,0,1,0,0,0},
+			 {1,1,1,0,1,0,1,1,1,1,0,0,1,0,0,0},
+			 {0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0},
+			 {0,0,0,1,1,0,0,1,0,1,1,1,1,1,1,1},
+			 {0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0},
+			 {1,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0},
+			 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+			 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+			 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+			 };
+	
+	
+	public void paint(Graphics g) {
+		if(tanks.size() <= 1){
+			addEnemy();
+		}
+
+
+		for(int i=0;i<walls.size();i++){
+			Wall w = walls.get(i);
+			w.draw(g);
+		}
+		for(int i=0;i<missiles.size();i++){
+			Missile m = missiles.get(i);
+			m.draw(g);
+		}
+		for(int i=0;i<tanks.size();i++){
+			Tank t = tanks.get(i);
+			t.draw(g);
+			t.eat();
+		}
+
+		if(t1.live){
+			t1.draw(g);
+			t1.eatme();
+		}
+		for(int i=0;i<explodes.size();i++){
+			Explode e = explodes.get(i);
+			e.draw(g);
+		}
+		
+		Color c2 = g.getColor();		
+		g.setColor(Color.WHITE);
+		g.drawString("Missile count = " + missiles.size(), 10, 50);
+		g.drawString("Enemy count = " + tanks.size(), 10, 70);
+		g.drawString("Explode count = " + explodes.size(), 10, 90);
+		g.drawString("Kill count  =" + kill, 10, 110);
+		//g.drawString(xMouse+" "+yMouse, 10, 130);
+		g.drawString("F2=增加敌人       F3=重生/加血       SPACE=开火        A=必杀      回车=想不到                   By:吴汪洋 V0.8", 260, 35);
+		g.setColor(c2);
+	}
+	
+	
+	public void update(Graphics g) {
+		if(offScreenImage == null){
+			offScreenImage = this.createImage(800,600);
+		}
+		Graphics gOffScreen = offScreenImage.getGraphics();
+		Color c = gOffScreen.getColor();
+		gOffScreen.setColor(Color.GRAY);
+		gOffScreen.fillRect(0, 0, 800, 600);
+		gOffScreen.setColor(c);
+		paint(gOffScreen);
+		g.drawImage(offScreenImage, 0, 0, null);
+		
+ 	}
+
+	public void addEnemy(){
+		for(int i=0;i<10;i++){
+			int rx = (r.nextInt(9)+1)*70;
+			int ry = (r.nextInt(9)+1)*70;
+			if(rx<=5||rx>=750||ry<=5||ry>=550);				
+			else{				
+				Tank t = new Tank(rx,ry,false,this);
+				
+				for(int j=0;j<tanks.size();j++){
+					Tank t2 = tanks.get(j);			
+					if(t.getRect().intersects(t2.getRect())||t1.getRect().intersects(t.getRect())){
+						flagAE = true;
+					}
+				}
+				
+				for(int k=0;k<walls.size();k++){
+					Wall w = walls.get(k);
+					if(t.getRect().intersects(w.getRect())){
+						flagAE = true;
+					}
+				}
+				if(!flagAE){
+					tanks.add(t);				
+				}
+				flagAE = false;
+			}
+		}
+	}
+	public void lauchFrame(){
+		this.setLocation(100,50);
+		this.setSize(800,600);
+
+		this.addKeyListener(new KeyMonitor());
+		this.addMouseListener(new MouseMonitor());
+			
+		for(int i=0;i<11;i++){
+			for(int j=0;j<16;j++){
+				if(flagWall[i][j]==1){
+					walls.add(new Wall((j)*50,(i)*50+22,this));
+				}
+			}
+		}
+		addEnemy();	
+		
+		
+		this.setBackground(Color.GRAY);
+		//new Thread(new PaintThread()).start();
+
+		thread1.start();
+		this.addWindowListener(new WindowAdapter(){
+			public void windowClosing(WindowEvent e) {
+				System.exit(0);
+			}			
+		});
+		this.setResizable(false);
+		this.setVisible(true);
+	}
+	private class PaintThread implements Runnable{
+
+		public void run() {
+			while(true){
+				repaint();
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			
+		}
+		
+	}
+	
+	private class KeyMonitor extends KeyAdapter{
+		
+
+		public void keyReleased(KeyEvent e) {
+			t1.KeyReleased(e);
+			int key = e.getKeyCode();
+			if(key==KeyEvent.VK_ENTER){
+				for(int i=0;i<32;i++){
+					missiles.add(new Missile((i)*25,15,Tank.Direction.D,true,MyGame.this,true));
+					missiles.add(new Missile((i)*25+12,585,Tank.Direction.U,true,MyGame.this,true));
+				}
+			}
+
+		}
+		public void keyPressed(KeyEvent e) {
+			t1.KeyPressed(e);
+		}
+	}
+	private class MouseMonitor extends MouseAdapter{
+		public void mouseReleased(MouseEvent e) {
+			xMouse = e.getX();
+			yMouse = e.getY();
+		}		
+	}
+			
+	
+	
+	public static void main(String[] args) {
+		MyGame mg = new MyGame();
+		mg.lauchFrame();
+	}
+
+}

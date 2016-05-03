@@ -1,0 +1,27 @@
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
+
+
+public class Wall {
+	public static final int WALLSIZE = 50;	
+	int x,y;
+	MyGame mg;	
+	
+	
+	public Wall(int x, int y, MyGame mg) {
+		this.x = x;
+		this.y = y;
+		this.mg = mg;
+	}
+	public void draw(Graphics g){
+		Color c = g.getColor();
+		g.setColor(Color.DARK_GRAY);
+		g.fillRect(x, y, WALLSIZE, WALLSIZE);
+		g.setColor(c);
+	}
+	public Rectangle getRect(){
+		return new Rectangle(x-4,y+3,WALLSIZE,WALLSIZE);
+	}
+	
+}

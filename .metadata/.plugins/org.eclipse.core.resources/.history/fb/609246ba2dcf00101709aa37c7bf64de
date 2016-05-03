@@ -1,0 +1,24 @@
+
+public class Ji {
+	int jX = 0;
+	int jG = 0;
+	int jM = 0;
+	char c = 33;
+	public void work(){
+		for(jX=0;jX<=300;jX++){
+			for(jG=0;jG<=20;jG++){
+				for(jM=0;jM<=33;jM++){
+					if((jX+jG+jM==100)&&(jX+15*jG+9*jM==300)){
+						System.out.println("¹«¼¦=" + jG +" "+"Ä¸¼¦=" + jM +" "+"Ð¡¼¦=" + jX);
+						System.out.print(c);
+					}
+				}
+			}
+		}
+	}
+	public static void main(String[] args) {
+		Ji ji = new Ji();
+		ji.work();
+	}
+
+}

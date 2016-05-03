@@ -1,0 +1,240 @@
+import java.awt.Color;
+import java.awt.Graphics;
+
+
+public class ChessMan {
+	public static final int CHESSSIZE = 60;
+	int x,y,oldx,oldy;
+	boolean good;
+	Chess ch;
+	
+	public void draw(Graphics g){
+		if(good){
+			g.setColor(Color.WHITE);
+		}else{
+			g.setColor(Color.DARK_GRAY);
+		}
+		g.fillOval(x-CHESSSIZE/2, y-CHESSSIZE/2, CHESSSIZE, CHESSSIZE);
+	}
+	
+	public void go(){
+		
+	}
+	public boolean left(){
+		oldx = x;
+		oldy = y;
+		x -= 100;
+		if(x<100){
+			x = oldx;
+			return false;			
+		}
+		return true;
+	}
+	public void up(){
+		oldx = x;
+		oldy = y;
+		y -= 100;
+	}
+	public void right(){
+		oldx = x;
+		oldy = y;
+		x += 100;
+		if(x>400){
+			x = oldx;
+			return false;			
+		}
+		return true;
+	}
+	public void down(){
+		oldx = x;
+		oldy = y;
+		y += 100;
+	}
+	
+	
+	public boolean eat(){
+		if(!good){
+				switch(this.x){
+				case 100:
+					if(getR(1)==1&&getR(2)==2&&getR(3)<=0)
+						return true;
+					break;
+				case 200:
+					if(getL(1)<=0&&getR(1)==1&&getR(2)==2)
+						return true;
+					if(getL(1)==2&&getR(1)==1&&getR(2)<=0)
+						return true;
+					break;
+				case 300:
+					if(getR(1)<=0&&getL(1)==1&&getL(2)==2)
+						return true;
+					if(getR(1)==2&&getL(1)==1&&getL(2)<=0)
+						return true;
+					break;
+				case 400:
+					if(getL(3)<=0&&getL(1)==1&&getL(2)==2)
+						return true;
+					break;
+				}
+				
+				switch(this.y){
+				case 100:
+					if(getD(1)==1&&getD(2)==2&&getD(3)<=0)
+						return true;
+					break;
+				case 200:
+					if(getU(1)<=0&&getD(1)==1&&getD(2)==2)
+						return true;
+					if(getU(1)==2&&getD(1)==1&&getD(2)<=0)
+						return true;
+					break;
+				case 300:
+					if(getD(1)<=0&&getU(1)==1&&getU(2)==2)
+						return true;
+					if(getD(1)==2&&getU(1)==1&&getU(2)<=0)
+						return true;
+					break;
+				case 400:
+					if(getU(3)<=0&&getU(1)==1&&getU(2)==2)
+						return true;
+					break;
+				}
+				return false;	
+		}else{
+			switch(this.x){
+			case 100:
+				if(getR(1)==2&&getR(2)==1&&getR(3)<=0)
+					return true;
+				break;
+			case 200:
+				if(getL(1)<=0&&getR(1)==2&&getR(2)==1)
+					return true;
+				if(getL(1)==1&&getR(1)==2&&getR(2)<=0)
+					return true;
+				break;
+			case 300:
+				if(getR(1)<=0&&getL(1)==2&&getL(2)==1)
+					return true;
+				if(getR(1)==1&&getL(1)==2&&getL(2)<=0)
+					return true;
+				break;
+			case 400:
+				if(getL(3)<=0&&getL(1)==2&&getL(2)==1)
+					return true;
+				break;
+			}
+			
+			switch(this.y){
+			case 100:
+				if(getD(1)==2&&getD(2)==1&&getD(3)<=0)
+					return true;
+				break;
+			case 200:
+				if(getU(1)<=0&&getD(1)==2&&getD(2)==1)
+					return true;
+				if(getU(1)==1&&getD(1)==2&&getD(2)<=0)
+					return true;
+				break;
+			case 300:
+				if(getD(1)<=0&&getU(1)==2&&getU(2)==1)
+					return true;
+				if(getD(1)==1&&getU(1)==2&&getU(2)<=0)
+					return true;
+				break;
+			case 400:
+				if(getU(3)<=0&&getU(1)==2&&getU(2)==1)
+					return true;
+				break;
+			}
+			return false;	
+		}
+	}
+	public int getU(int u){
+		int targetX = this.x;
+		int targetY = this.y - u*100;
+		if(targetY<100){
+			return -1;
+		}
+		for(int i=0;i<ch.eChessMans.size();i++){
+			ChessMan c = ch.eChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y){
+				return 1;
+			}
+		}
+		for(int i=0;i<ch.gChessMans.size();i++){
+			ChessMan c = ch.gChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y){
+				return 2;
+			}
+		}
+		return 0;
+	}
+	public int getD(int d){
+		int targetX = this.x;
+		int targetY = this.y + d*100;
+		if(targetY>400){
+			return -1;
+		}
+		for(int i=0;i<ch.eChessMans.size();i++){
+			ChessMan c = ch.eChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y){
+				return 1;
+			}
+		}
+		for(int i=0;i<ch.gChessMans.size();i++){
+			ChessMan c = ch.gChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y){
+				return 2;
+			}
+		}
+		return 0;
+	}
+	public int getL(int l){
+		int targetX = this.x - l*100;
+		int targetY = this.y;
+		if(targetX<100){
+			return -1;
+		}
+		for(int i=0;i<ch.eChessMans.size();i++){
+			ChessMan c = ch.eChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y){
+				return 1;
+			}
+		}
+		for(int i=0;i<ch.gChessMans.size();i++){
+			ChessMan c = ch.gChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y){
+				return 2;
+			}
+		}
+		return 0;
+	}
+	public int getR(int r){
+		int targetX = this.x + r*100;
+		int targetY = this.y;
+		if(targetX>400){
+			return -1;
+		}
+		for(int i=0;i<ch.eChessMans.size();i++){
+			ChessMan c = ch.eChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y){
+				return 1;
+			}
+		}
+		for(int i=0;i<ch.gChessMans.size();i++){
+			ChessMan c = ch.gChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y){
+				return 2;
+			}
+		}
+		return 0;
+	}
+	
+
+	public ChessMan(int x, int y, boolean good,Chess ch) {
+		this.x = x;
+		this.y = y;
+		this.good = good;
+		this.ch = ch;
+	}
+}

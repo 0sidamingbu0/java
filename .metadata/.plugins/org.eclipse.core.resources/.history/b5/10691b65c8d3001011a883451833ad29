@@ -1,0 +1,853 @@
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
+
+
+public class ChessMan {
+	public static final int CHESSSIZE = 60;   /*棋子大小*/
+	int x,y,oldx,oldy,tX,tY; 	 /* 分别对应x坐标,y坐标,x原来,y原来,临时x(鼠标松开时转化后的临时坐标),临时y */
+	static int deleteX = 0;		 /* 进行运算时候若有可以吃的情况,需要临时删除棋子,这是删除的棋子的坐标,判断完后恢复用 */
+	static int deleteY = 0;
+	int scoreL = 0;   			 /*向上走的得分*/
+	int scoreU = 0;
+	int scoreR = 0;
+	int scoreD = 0;
+	int dir = 0;   				  /*得分最高的方向1234==LURD*/
+	int score = 1000;  			  /*最高得分,score()返回的值*/
+	int eatedX = 0;   			  /*存储判断时临时删除棋子的坐标,省的混淆*/
+	int eatedY = 0 ;
+	boolean good;   			  /*true=人,false=机器*/
+	static boolean dis = false;   /*删除时是否绘制Disappear*/
+	boolean haven = false;  	  /*鼠标释放函数目标位置是否有棋子*/
+	boolean eated = false;  	  /*判断是否被临时删除*/
+	boolean selected = false;     /*是否被选中,若被选中变红色*/
+	Chess ch;		   			  /*大管家,引用Chess*/
+	
+    /************************* 
+     * 函数名称：score
+     * 中文：判断得分
+     * 作用：只能被机器人调用，对个棋子对象按左-上-右-下的顺序依次进行模拟走棋，若可以走则走到对应方向然后再依次进行判断，项目如下：
+     * 1.能够向某个方向走棋则此方向分数 +10000
+     * 2.如果此方向可以吃对方棋子，分数 +1000
+     *   1）若可以吃，还需要将被吃的棋子删除掉在继续进行判断
+     *   2）若可以吃，需要将被删除的棋子恢复出来
+     * 3.如果去送死，就是说走到那步会有被对方吃掉的可能则分数 -200
+     * 4.分别对每一个机器人棋子进行choice和attack检测，若存在分别加分 50 30
+     * 5.分别对每一个人类方棋子进行choice和attack检测，若存在分别减分 50 30
+     * ***********************/
+	public int score(){
+		oldx = x;
+		oldy = y;
+		dir = 0;
+		scoreL = 0;
+		scoreU = 0;
+		scoreR = 0;
+		scoreD = 0;
+		dis = false;
+		if(left()){
+			scoreL += 10000;
+			if(eat(true)){
+				scoreL += 1000;
+				//delete(true,deleteX,deleteY);
+				eated = true;
+				eatedX = deleteX;
+				eatedY = deleteY;
+			}
+			if(goDead()){scoreL -= 200;}
+			
+			for(int i=0;i<ch.eChessMans.size();i++){
+				scoreL += ch.eChessMans.get(i).chance(i)*50;	
+				scoreL += ch.eChessMans.get(i).attack(i)*30;
+			}
+			for(int i=0;i<ch.gChessMans.size();i++){
+				scoreL -= ch.gChessMans.get(i).chance(i)*50;
+				scoreL -= ch.gChessMans.get(i).attack(i)*30;
+			}
+			if(eated){
+				ch.gChessMans.add(new ChessMan(eatedX,eatedY,true,ch));
+				eated = false;
+			}
+			this.x += 100;
+		}//left
+		if(up()){
+			scoreU += 10000;
+			if(eat(true)){
+				scoreU += 1000;
+				//delete(true,deleteX,deleteY);
+				eated = true;
+				eatedX = deleteX;
+				eatedY = deleteY;
+			}
+			if(goDead()){scoreU -= 200;}
+			
+			for(int i=0;i<ch.eChessMans.size();i++){
+				scoreU += ch.eChessMans.get(i).chance(i)*50;
+				scoreU += ch.eChessMans.get(i).attack(i)*30;
+			}
+			for(int i=0;i<ch.gChessMans.size();i++){
+				scoreU -= ch.gChessMans.get(i).chance(i)*50;
+				scoreU -= ch.gChessMans.get(i).attack(i)*30;
+			}
+			if(eated){
+				ch.gChessMans.add(new ChessMan(eatedX,eatedY,true,ch));
+				eated = false;
+			}
+			this.y += 100;
+		}//up
+		if(right()){
+			scoreR += 10000;
+			if(eat(true)){
+				scoreR += 1000;
+				//delete(true,deleteX,deleteY);
+				eated = true;
+				eatedX = deleteX;
+				eatedY = deleteY;
+			}
+			if(goDead()){scoreR -= 200;}
+			
+			for(int i=0;i<ch.eChessMans.size();i++){
+				scoreR += ch.eChessMans.get(i).chance(i)*50;
+				scoreR += ch.eChessMans.get(i).attack(i)*30;
+			}
+			for(int i=0;i<ch.gChessMans.size();i++){
+				scoreR -= ch.gChessMans.get(i).chance(i)*50;
+				scoreR -= ch.gChessMans.get(i).attack(i)*30;
+			}
+			if(eated){				
+				ch.gChessMans.add(new ChessMan(eatedX,eatedY,true,ch));
+				eated = false;
+			}
+			this.x -= 100;
+		}//right
+		if(down()){
+			scoreD += 10000;
+			if(eat(true)){
+				scoreD += 1000;
+				//delete(true,deleteX,deleteY);
+				eated = true;
+				eatedX = deleteX;
+				eatedY = deleteY;
+			}
+			if(goDead()){
+				scoreD -= 200;
+				}
+			
+			for(int i=0;i<ch.eChessMans.size();i++){
+				scoreD += ch.eChessMans.get(i).chance(i)*50;
+				scoreD += ch.eChessMans.get(i).attack(i)*30;
+			}
+			for(int i=0;i<ch.gChessMans.size();i++){
+				scoreD -= ch.gChessMans.get(i).chance(i)*50;
+				scoreD -= ch.gChessMans.get(i).attack(i)*30;
+			}
+			if(eated){
+				ch.gChessMans.add(new ChessMan(eatedX,eatedY,true,ch));
+				eated = false;
+			}
+			this.y -= 100;
+		}//down
+		score = scoreL;dir = 1;
+		if(score<scoreU){score = scoreU;dir = 2;}
+		if(score<scoreR){score = scoreR;dir = 3;}
+		if(score<scoreD){score = scoreD;dir = 4;}	
+		x = oldx;
+		y = oldy;
+		return score;
+	}
+	
+    /************************* 
+     * 函数名称：del
+     * 中文：执行得分最高的棋子的动作
+     * 作用：得分最高的棋子调用此函数，根据score函数算出的dir进行走棋，并且判断能否eat(true)吃子
+     * 返回值:score(得分int型)
+     * ***********************/
+	public void del(){
+		if(dir!=0){
+			switch(dir){
+			case 1:
+				x -= 100;
+				dis = true;
+				eat(true);
+				break;
+			case 2:
+				y -= 100;
+				dis = true;
+				eat(true);
+				break;
+			case 3:
+				x += 100;
+				dis = true;
+				eat(true);
+				break;
+			case 4:
+				y += 100;
+				dis = true;
+				eat(true);
+				break;
+			}
+			dir = 0;
+		}
+	}
+	
+    /************************* 
+     * 函数名称：delete
+     * 中文：删除棋子
+     * 参数:棋子势力,欲删除的x坐标,欲删除的y坐标
+     * 作用：根据good2参数判断删除的棋子的势力,根据xx和yy对应的点删除这个点上的棋子
+     * 注:如果dis变量为真也就是需要绘制Disappear时,会在被删除坐标上创建一个Disappear对象
+     * ***********************/
+	public void delete(boolean good2,int xx,int yy){
+		if(good2){
+			for(int i=0;i<ch.gChessMans.size();i++){
+				if(ch.gChessMans.get(i).x==xx&&ch.gChessMans.get(i).y==yy){					
+					if(dis){
+						ch.disappears.add(new Disappear(xx,yy,ch));
+					}
+					ch.gChessMans.remove(i);
+				}
+			}
+		}
+		else{
+			for(int i=0;i<ch.eChessMans.size();i++){
+				if(ch.eChessMans.get(i).x==xx&&ch.eChessMans.get(i).y==yy){					
+					if(dis){
+						ch.disappears.add(new Disappear(xx,yy,ch));
+					}
+					ch.eChessMans.remove(i);
+				}
+			}			
+		}
+	}
+	
+	
+	
+    /************************* 
+     * 函数名称：goDead
+     * 中文：检验是不是送死
+     * 作用：检验棋子在此位置是否会有被吃的危险
+     * 返回值:true,false
+     * ***********************/
+	public boolean goDead(){
+		for(int i=0;i<ch.gChessMans.size();i++){
+			if(ch.gChessMans.get(i).chance(i)>0){
+				return true;
+			}
+		}//for		
+		return false;
+	}//goDead
+	
+	
+    /************************* 
+     * 函数名称：chance
+     * 中文：判断是否有吃子的机会
+     * 参数:int型,代表想要判断的对应的List里的元素
+     * 作用：判断List里面第j个元素,在左-上-右-下四个方向是否有吃对方棋子的机会,若有返回true
+     * 返回值:true,false
+     * ***********************/
+	public int chance(int j){
+		ChessMan cm;
+		int tmp = 0;
+		if(!good){
+			cm = ch.eChessMans.get(j);
+		}else{
+			cm = ch.gChessMans.get(j);
+		}
+		if(cm.left()){
+			if(cm.eat(false)){
+				tmp++;
+			}//if eat
+			this.x += 100;
+		}//if left
+		if(cm.up()){
+			if(cm.eat(false)){
+				tmp++;
+			}//if eat
+			this.y += 100;
+		}//if up
+		if(cm.right()){
+			if(cm.eat(false)){
+				tmp++;
+			}//if eat
+			this.x -= 100;
+		}//if right
+		if(cm.down()){
+			if(cm.eat(false)){
+				tmp++;
+			}//if eat
+			this.y -= 100;
+		}//if down	
+		return tmp;
+	}//chance
+	
+	
+    /************************* 
+     * 函数名称：attack
+     * 中文：判断是否有进攻的机会
+     * 参数:int型,代表想要判断的对应的List里的元素
+     * 作用：判断List里面第j个元素,在左-上-右-下四个方向是否有进攻的机会,进攻就是指走完某一步之后己方的某个棋子有choice(也就是吃对方棋子的机会)若有返回true.
+     * 返回值:true,false
+     * ***********************/
+	public int attack(int j){
+		ChessMan cm;
+		int tmp = 0;
+		if(!good){
+			cm = ch.eChessMans.get(j);		
+			if(cm.left()){
+				for(int i=0;i<ch.eChessMans.size();i++){
+					if(ch.eChessMans.get(i).chance(i)>0){
+						tmp++;
+					}
+				}			
+				this.x += 100;
+			}//left
+			if(cm.up()){
+				for(int i=0;i<ch.eChessMans.size();i++){
+					if(ch.eChessMans.get(i).chance(i)>0){
+						tmp++;
+					}
+				}			
+				this.y += 100;
+			}//up
+			if(cm.right()){
+				for(int i=0;i<ch.eChessMans.size();i++){
+					if(ch.eChessMans.get(i).chance(i)>0){
+						tmp++;
+					}
+				}			
+				this.x -= 100;
+			}//right
+			if(cm.down()){
+				for(int i=0;i<ch.eChessMans.size();i++){
+					if(ch.eChessMans.get(i).chance(i)>0){
+						tmp++;
+					}
+				}			
+				this.y -= 100;
+			}//down
+		}//if !good
+		else{///////////////////////////////////////////////////else
+			cm = ch.gChessMans.get(j);		
+			if(cm.left()){
+				for(int i=0;i<ch.gChessMans.size();i++){
+					if(ch.gChessMans.get(i).chance(i)>0){
+						tmp++;
+					}
+				}			
+				this.x += 100;
+			}//left
+			if(cm.up()){
+				for(int i=0;i<ch.gChessMans.size();i++){
+					if(ch.gChessMans.get(i).chance(i)>0){
+						tmp++;
+					}
+				}			
+				this.y += 100;
+			}//up
+			if(cm.right()){
+				for(int i=0;i<ch.gChessMans.size();i++){
+					if(ch.gChessMans.get(i).chance(i)>0){
+						tmp++;
+					}
+				}			
+				this.x -= 100;
+			}//right
+			if(cm.down()){
+				for(int i=0;i<ch.gChessMans.size();i++){
+					if(ch.gChessMans.get(i).chance(i)>0){
+						tmp++;
+					}
+				}			
+				this.y -= 100;
+			}//down
+		}//else	
+		return tmp;
+	}
+	
+	
+	
+	public void draw(Graphics g){
+		if(good){
+			if(selected){
+				g.setColor(Color.RED);
+			}else{
+				g.setColor(Color.WHITE);
+			}
+		}else{
+			g.setColor(Color.DARK_GRAY);
+		}
+		g.fillOval(x-CHESSSIZE/2, y-CHESSSIZE/2, CHESSSIZE, CHESSSIZE);
+	}
+	public Rectangle getRect(){
+		return new Rectangle(x-CHESSSIZE/2,y-CHESSSIZE/2,CHESSSIZE,CHESSSIZE);
+	}
+	public void released(){
+		this.selected = false;
+		
+		if(ch.mouseX>= 50&&ch.mouseX<150)
+			tX = 100;
+		if(ch.mouseX>=150&&ch.mouseX<250)
+			tX = 200;
+		if(ch.mouseX>=250&&ch.mouseX<350)
+			tX = 300;
+		if(ch.mouseX>=350&&ch.mouseX<450)
+			tX = 400;
+
+		if(ch.mouseY>= 50&&ch.mouseY<150)
+			tY = 100;
+		if(ch.mouseY>=150&&ch.mouseY<250)
+			tY = 200;
+		if(ch.mouseY>=250&&ch.mouseY<350)
+			tY = 300;
+		if(ch.mouseY>=350&&ch.mouseY<450)
+			tY = 400;
+		if(tX>=100&&tX<=400&&tY>=100&&tY<=400){
+			if(!(tX==this.x&&tY==this.y)){	
+				haven = false;
+				for(int i=0;i<ch.gChessMans.size();i++){
+					if(ch.gChessMans.get(i).x == tX&&ch.gChessMans.get(i).y==tY){
+						haven = true;
+					}
+				}
+				for(int i=0;i<ch.eChessMans.size();i++){
+					if(ch.eChessMans.get(i).x == tX&&ch.eChessMans.get(i).y==tY){
+						haven = true;
+					}
+				}
+				if((!haven)&&((tX-this.x==100&&tY==this.y)||(this.x-tX==100&&tY==this.y)||(tY-this.y==100&&tX==this.x)||(this.y-tY==100&&tX==this.x))){
+					this.x = tX;
+					this.y = tY;
+					eat(true);
+					if(ch.eChessMans.size()>=2)
+					ch.start();
+				}
+			}
+		}
+	}
+	
+	public boolean left(){		
+		if(getL(1)==0){
+			x -= 100;
+			return true;
+		}
+		return false;
+	}
+	public boolean up(){
+		if(getU(1)==0){
+			y -= 100;
+			return true;
+		}
+		return false;
+	}
+	public boolean right(){
+		if(getR(1)==0){
+			x += 100;
+			return true;
+		}
+		return false;
+	}
+	public boolean down(){
+		if(getD(1)==0){
+			y += 100;
+			return true;
+		}
+		return false;
+	}
+	
+	
+	public boolean eat(boolean rm){
+		if(!good){
+				switch(this.x){
+				case 100:
+					if(getR(1)==1&&getR(2)==2&&getR(3)<=0){		
+						if(rm){							
+							deleteX = this.x + 200;
+							deleteY = this.y;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					break;
+				case 200:
+					if(getL(1)==2&&getR(1)==1&&getR(2)<=0){
+						if(rm){
+							deleteX = this.x - 100;
+							deleteY = this.y;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					if(getL(1)==1&&getR(1)==2&&getR(2)<=0){
+						if(rm){
+							deleteX = this.x + 100;
+							deleteY = this.y;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					if(getL(1)<=0&&getR(1)==1&&getR(2)==2){
+						if(rm){
+							deleteX = this.x + 200;
+							deleteY = this.y;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					break;
+				case 300:
+					if(getR(1)<=0&&getL(1)==1&&getL(2)==2){
+						if(rm){
+							deleteX = this.x - 200;
+							deleteY = this.y;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					if(getR(1)==2&&getL(1)==1&&getL(2)<=0){
+						if(rm){
+							deleteX = this.x + 100;
+							deleteY = this.y;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					if(getR(1)==1&&getL(1)==2&&getL(2)<=0){
+						if(rm){
+							deleteX = this.x - 100;
+							deleteY = this.y;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					break;
+				case 400:
+					if(getL(3)<=0&&getL(1)==1&&getL(2)==2){
+						if(rm){
+							deleteX = this.x - 200;
+							deleteY = this.y;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					break;
+				}
+				
+				switch(this.y){
+				case 100:
+					if(getD(1)==1&&getD(2)==2&&getD(3)<=0){
+						if(rm){
+							deleteX = this.x;
+							deleteY = this.y + 200;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					break;
+				case 200:
+					if(getU(1)<=0&&getD(1)==1&&getD(2)==2){
+						if(rm){
+							deleteX = this.x;
+							deleteY = this.y + 200;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					if(getU(1)==2&&getD(1)==1&&getD(2)<=0){
+						if(rm){
+							deleteX = this.x;
+							deleteY = this.y - 100;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					if(getU(1)==1&&getD(1)==2&&getD(2)<=0){
+						if(rm){
+							deleteX = this.x;
+							deleteY = this.y + 100;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					break;
+				case 300:
+					if(getD(1)<=0&&getU(1)==1&&getU(2)==2){
+						if(rm){
+							deleteX = this.x;
+							deleteY = this.y - 200;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					if(getD(1)==2&&getU(1)==1&&getU(2)<=0){
+						if(rm){
+							deleteX = this.x;
+							deleteY = this.y + 100;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					if(getD(1)==1&&getU(1)==2&&getU(2)<=0){
+						if(rm){
+							deleteX = this.x;
+							deleteY = this.y - 100;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					break;
+				case 400:
+					if(getU(3)<=0&&getU(1)==1&&getU(2)==2){
+						if(rm){
+							deleteX = this.x;
+							deleteY = this.y - 200;
+							delete(true,deleteX,deleteY);
+						}
+						return true;						
+					}
+					break;
+				}
+				
+		}else{
+			switch(this.x){
+			case 100:
+				if(getR(1)==2&&getR(2)==1&&getR(3)<=0){
+					if(rm){
+						deleteX = this.x + 200;
+						deleteY = this.y;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				break;
+			case 200:
+				if(getL(1)<=0&&getR(1)==2&&getR(2)==1){
+					if(rm){
+						deleteX = this.x + 200;
+						deleteY = this.y;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				if(getL(1)==1&&getR(1)==2&&getR(2)<=0){
+					if(rm){
+						deleteX = this.x - 100;
+						deleteY = this.y;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				if(getL(1)==2&&getR(1)==1&&getR(2)<=0){
+					if(rm){
+						deleteX = this.x + 100;
+						deleteY = this.y;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				break;
+			case 300:
+				if(getR(1)<=0&&getL(1)==2&&getL(2)==1){
+					if(rm){
+						deleteX = this.x - 200;
+						deleteY = this.y;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				if(getR(1)==1&&getL(1)==2&&getL(2)<=0){
+					if(rm){
+						deleteX = this.x + 100;
+						deleteY = this.y;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				if(getR(1)==2&&getL(1)==1&&getL(2)<=0){
+					if(rm){
+						deleteX = this.x - 100;
+						deleteY = this.y;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				break;
+			case 400:
+				if(getL(3)<=0&&getL(1)==2&&getL(2)==1){
+					if(rm){
+						deleteX = this.x - 200;
+						deleteY = this.y;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				break;
+			}
+			
+			switch(this.y){
+			case 100:
+				if(getD(1)==2&&getD(2)==1&&getD(3)<=0){
+					if(rm){
+						deleteX = this.x;
+						deleteY = this.y + 200;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				break;
+			case 200:
+				if(getU(1)<=0&&getD(1)==2&&getD(2)==1){
+					if(rm){
+						deleteX = this.x;
+						deleteY = this.y + 200;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				if(getU(1)==1&&getD(1)==2&&getD(2)<=0){
+					if(rm){
+						deleteX = this.x;
+						deleteY = this.y - 100;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				if(getU(1)==2&&getD(1)==1&&getD(2)<=0){
+					if(rm){
+						deleteX = this.x;
+						deleteY = this.y + 100;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				break;
+			case 300:
+				if(getD(1)<=0&&getU(1)==2&&getU(2)==1){
+					if(rm){
+						deleteX = this.x;
+						deleteY = this.y - 200;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				if(getD(1)==1&&getU(1)==2&&getU(2)<=0){
+					if(rm){
+						deleteX = this.x;
+						deleteY = this.y + 100;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				if(getD(1)==2&&getU(1)==1&&getU(2)<=0){
+					if(rm){
+						deleteX = this.x;
+						deleteY = this.y - 100;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				break;
+			case 400:
+				if(getU(3)<=0&&getU(1)==2&&getU(2)==1){
+					if(rm){
+						deleteX = this.x;
+						deleteY = this.y - 200;
+						delete(false,deleteX,deleteY);
+					}
+					return true;					
+				}
+				break;
+			}
+			
+		}
+		return false;	
+	}
+	public int getU(int u){
+		int targetX = this.x;
+		int targetY = this.y - u*100;
+		if(targetY<100){
+			return -1;
+		}
+		for(int i=0;i<ch.eChessMans.size();i++){
+			ChessMan c = ch.eChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y&&c!=this){
+				return 1;
+			}
+		}
+		for(int i=0;i<ch.gChessMans.size();i++){
+			ChessMan c = ch.gChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y&&c!=this){
+				return 2;
+			}
+		}
+		return 0;
+	}
+	public int getD(int d){
+		int targetX = this.x;
+		int targetY = this.y + d*100;
+		if(targetY>400){
+			return -1;
+		}
+		for(int i=0;i<ch.eChessMans.size();i++){
+			ChessMan c = ch.eChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y&&c!=this){
+				return 1;
+			}
+		}
+		for(int i=0;i<ch.gChessMans.size();i++){
+			ChessMan c = ch.gChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y&&c!=this){
+				return 2;
+			}
+		}
+		return 0;
+	}
+	public int getL(int l){
+		int targetX = this.x - l*100;
+		int targetY = this.y;
+		if(targetX<100){
+			return -1;
+		}
+		for(int i=0;i<ch.eChessMans.size();i++){
+			ChessMan c = ch.eChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y&&c!=this){
+				return 1;
+			}
+		}
+		for(int i=0;i<ch.gChessMans.size();i++){
+			ChessMan c = ch.gChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y&&c!=this){
+				return 2;
+			}
+		}
+		return 0;
+	}
+	public int getR(int r){
+		int targetX = this.x + r*100;
+		int targetY = this.y;
+		if(targetX>400){
+			return -1;
+		}
+		for(int i=0;i<ch.eChessMans.size();i++){
+			ChessMan c = ch.eChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y&&c!=this){
+				return 1;
+			}
+		}
+		for(int i=0;i<ch.gChessMans.size();i++){
+			ChessMan c = ch.gChessMans.get(i);
+			if(targetX==c.x&&targetY==c.y&&c!=this){
+				return 2;
+			}
+		}
+		return 0;
+	}
+	
+
+	public ChessMan(int x, int y, boolean good,Chess ch) {
+		this.x = x;
+		this.y = y;
+		oldx = x;
+		oldy = y;
+		this.good = good;
+		this.ch = ch;
+	}
+}

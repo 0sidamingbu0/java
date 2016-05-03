@@ -1,0 +1,15 @@
+
+public class Ji {
+	int jX = 0;
+	int jG = 0;
+	int jM = 0;
+	
+	public void work(){
+		
+	}
+	public static void main(String[] args) {
+		Ji ji = new Ji();
+		ji.work();
+	}
+
+}
